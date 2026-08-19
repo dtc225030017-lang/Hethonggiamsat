@@ -1,0 +1,41 @@
+name: ✨ Đề Xuất Tính Năng Mới (Feature Request)
+description: Đề xuất tính năng hoặc ý tưởng cải tiến mới cho hệ thống giám sát
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã đóng góp ý tưởng phát triển hệ thống! Hãy mô tả chi tiết mong muốn của bạn theo mẫu dưới đây.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn Đề Cần Giải Quyết (Problem Statement)
+      description: Vấn đề hoặc bất tiện nào thúc đẩy bạn đề xuất tính năng này?
+      placeholder: "Ví dụ: Hiện tại chưa có cảnh báo qua Telegram khi có sự cố cháy nổ ban đêm..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Giải Pháp Đề Xuất (Proposed Solution)
+      description: Mô tả chi tiết cách bạn muốn tính năng hoạt động.
+      placeholder: "Ví dụ: Tích hợp Telegram Bot API gửi thông báo khẩn cấp kèm nồng độ gas và vị trí..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Các Giải Pháp Thay Thế Đã Cân Nhắc (Alternatives Considered)
+      description: Bất kỳ giải pháp nào khác bạn đã từng thử hoặc cân nhắc?
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Thông Tin Bổ Sung (Additional Context)
+      description: Thêm sơ đồ, hình ảnh mô tả hoặc liên kết tham khảo nếu có.

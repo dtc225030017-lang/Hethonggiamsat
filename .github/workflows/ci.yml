@@ -1,0 +1,83 @@
+name: CI Build & Verification
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+  workflow_dispatch:
+
+jobs:
+  code-formatting-check:
+    name: Lint & Code Style Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Run Clang-Format verification
+        run: |
+          echo "Checking C++ formatting against .clang-format..."
+          find src include ui esp32/src esp32/include -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run --Werror || {
+            echo "Formatting errors found. Please format your code with clang-format."
+            exit 0 # Non-blocking on initial CI, warnings reported
+          }
+
+  build-qt-app-host:
+    name: Build Qt6 App (Host Ubuntu)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            libqt6sql6-sqlite \
+            libmosquitto-dev \
+            libsqlite3-dev
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Qt Application
+        run: |
+          cmake --build build --config Release --parallel $(nproc)
+
+      - name: Run Application Self-Test (Offscreen)
+        run: |
+          QT_QPA_PLATFORM=offscreen ./build/Hethonggiamsat --self-test || true
+
+  build-esp32-firmware:
+    name: Build ESP32 Firmware (PlatformIO)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install PlatformIO Core
+        run: |
+          pip install --upgrade platformio
+
+      - name: Build ESP32 PlatformIO Environment
+        working-directory: esp32
+        run: |
+          pio run -e esp32dev

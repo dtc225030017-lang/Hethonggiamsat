@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Thảo Luận & Hỏi Đáp Kỹ Thuật (Community Discussions)
+    url: https://github.com/blynkapp04-ui/Hethonggiamsat/discussions
+    about: Đặt câu hỏi, thảo luận ý tưởng kiến trúc hoặc chia sẻ cách triển khai thực tế.
+  - name: 🔒 Báo Cáo Lỗ Hổng Bảo Mật (Security Report)
+    url: https://github.com/blynkapp04-ui/Hethonggiamsat/security/advisories/new
+    about: Báo cáo bảo mật riêng tư theo chính sách SECURITY.md.

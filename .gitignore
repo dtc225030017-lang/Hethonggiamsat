@@ -1,14 +1,104 @@
-build-*/
+# ==============================================================================
+# Build & Compilation Artifacts
+# ==============================================================================
 build/
+build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+*.ninja
+.ninja_*
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+*.out
+*.app
+
+# ==============================================================================
+# Qt / Qt Creator
+# ==============================================================================
 CMakeLists.txt.user*
 *.user
+*.user.*
+*.autosave
+*.qmlc
+*.jsc
+.qmake.stash
+.qmake.cache
+ui_*.h
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+
+# ==============================================================================
+# ESP32 / PlatformIO
+# ==============================================================================
+.pio/
+.pioenvs/
+.piolibdeps/
 .platformio/
 .pio-core/
 .pytools/
 .venv-platformio/
-.pio/
 esp32/.pio/
+esp32/.pioenvs/
+esp32/.piolibdeps/
+.clangd/
+
+# Keep secrets.h ignored if private, keep secrets.h.example
+# esp32/include/secrets.h
+
+# ==============================================================================
+# IDEs and Editors
+# ==============================================================================
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.directory
+
+# ==============================================================================
+# Operating System Files
+# ==============================================================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# ==============================================================================
+# Runtime Data & Logs (preserve directories with .gitkeep)
+# ==============================================================================
 data/*
 !data/.gitkeep
+!data/README.md
 logs/*
 !logs/.gitkeep
+!logs/README.md
+backups/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+initial_admin.txt

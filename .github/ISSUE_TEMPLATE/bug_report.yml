@@ -1,0 +1,75 @@
+name: 🐛 Báo Cáo Lỗi (Bug Report)
+description: Báo cáo lỗi kỹ thuật hoặc sự cố bất thường trong quá trình vận hành hệ thống
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã đóng góp báo cáo lỗi! Vui lòng cung cấp chi tiết theo mẫu dưới đây để chúng tôi xử lý nhanh nhất.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Thành Phần Bị Ảnh Hưởng (Affected Component)
+      description: Lỗi xuất hiện ở thành phần nào của hệ thống?
+      options:
+        - "Ứng dụng Qt6 Desktop / Raspberry Pi GUI"
+        - "Cơ sở dữ liệu SQLite / Quản lý lưu trữ"
+        - "Dịch vụ MQTT Client / Broker Mosquitto"
+        - "ESP32 Firmware (Cảm biến, Màn hình, WiFi, Cảnh báo)"
+        - "Hệ thống Xác thực / Quản lý Người dùng"
+        - "Cross-compilation / Build Scripts"
+        - "Khác"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Mô Tả Lỗi Chi Tiết (Bug Description)
+      description: Mô tả rõ ràng và súc tích về sự cố bạn gặp phải.
+      placeholder: "Ví dụ: Khi mất kết nối MQTT, ứng dụng không hiển thị biểu tượng cảnh báo mất mạng..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Các Bước Tái Hiện Lỗi (Steps to Reproduce)
+      description: Các bước cụ thể để người khác có thể tái hiện lỗi.
+      placeholder: |
+        1. Khởi động ứng dụng với lệnh './Hethonggiamsat'
+        2. Ngắt kết nối broker Mosquitto: 'sudo systemctl stop mosquitto'
+        3. Quan sát giao diện Dashboard...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Hành Vi Kỳ Vọng (Expected Behavior)
+      description: Hành vi đúng mà hệ thống nên thực hiện.
+      placeholder: "Ví dụ: Sau 8 giây không có dữ liệu, nhãn Watchdog phải chuyển sang trạng thái DATA STALE..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Môi Trường Hoạt Động (Environment)
+      description: Thông tin phần cứng & hệ điều hành của bạn.
+      value: |
+        - Hệ Điều Hành: Raspberry Pi OS Bookworm (ARM64) / Ubuntu Desktop
+        - Phiên Bản Qt: 6.5.1
+        - Phần Cứng ESP32: NodeMCU ESP32-WROOM-32
+        - Mosquitto Version: 2.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Nhật Ký Hoạt Động / Logs / Screenshots
+      description: Đính kèm nội dung file logs/hethonggiamsat.log hoặc ảnh chụp màn hình nếu có.
+      render: shell

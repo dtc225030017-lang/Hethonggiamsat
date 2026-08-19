@@ -1,0 +1,41 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Source code and configuration files
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.c text eol=lf
+*.ino text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ini text eol=lf
+*.cmake text eol=lf
+CMakeLists.txt text eol=lf
+
+# Shell scripts must have LF endings
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Windows batch files must have CRLF endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.sqlite binary
+*.sqlite3 binary
+*.db binary
+*.bin binary
+*.elf binary
+*.tar.gz binary
+*.zip binary
