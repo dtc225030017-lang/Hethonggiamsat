@@ -173,33 +173,96 @@ Mọi khía cạnh kiến trúc và vận hành đều được lập tài liệ
 
 ```text
 .
-├── .github/                      # Cấu hình GitHub Actions, Issue & PR Templates
+├── .github/                                # Cấu hình GitHub Actions, Issue & PR Templates
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml                  # Mẫu báo cáo lỗi phần mềm / phần cứng
+│   │   ├── config.yml                      # Cấu hình chuyển hướng hỗ trợ GitHub
+│   │   └── feature_request.yml             # Mẫu đề xuất tính năng & cải tiến mới
 │   ├── workflows/
-│   │   ├── ci.yml                # CI build tự động cho Qt và ESP32
-│   │   └── release.yml           # Tự động xuất bản GitHub Release
-│   ├── ISSUE_TEMPLATE/           # Biểu mẫu báo lỗi và đề xuất tính năng
-│   ├── PULL_REQUEST_TEMPLATE.md  # Quy chuẩn gửi Pull Request
-│   └── dependabot.yml            # Tự động cập nhật dependencies
-├── data/                         # Thư mục chứa cơ sở dữ liệu SQLite runtime
-├── esp32/                        # Mã nguồn Firmware PlatformIO cho ESP32
-│   ├── include/                  # Header files (config, secrets, sensors)
-│   ├── src/                      # C++ source files (MQTT, LCD, WiFi, Sensors)
-│   └── platformio.ini            # Cấu hình môi trường build PlatformIO
-├── include/                      # C++ Header files ứng dụng Qt trung tâm
-├── logs/                         # Thư mục chứa nhật ký hoạt động hệ thống
-├── scripts/                      # Shell scripts tự động hóa build, deploy và run
-├── src/                          # C++ Source files ứng dụng Qt trung tâm
-├── ui/                           # Giao diện người dùng Qt Widgets & Pages
-├── .clang-format                 # Quy chuẩn định dạng C++17
-├── .editorconfig                 # Quy chuẩn editor đồng bộ
-├── .gitignore                    # Cấu hình loại trừ file rác và artifacts
-├── .gitattributes                # Chuẩn hóa định dạng xuống dòng (LF/CRLF)
-├── CHANGELOG.md                  # Nhật ký các phiên bản phát hành
-├── CODE_OF_CONDUCT.md            # Bộ quy tắc ứng xử cộng đồng
-├── CONTRIBUTING.md               # Hướng dẫn quy trình đóng góp mã nguồn
-├── LICENSE                       # Giấy phép nguồn mở MIT
-├── README.md                     # Tài liệu giới thiệu chính của dự án
-└── SECURITY.md                   # Chính sách bảo mật và báo cáo lỗ hổng
+│   │   ├── ci.yml                          # Workflow kiểm thử & build CI cho Qt6 và PlatformIO
+│   │   └── release.yml                     # Tự động đóng gói release artifacts khi gắn tag
+│   ├── dependabot.yml                      # Cấu hình tự động cập nhật GitHub Actions
+│   └── PULL_REQUEST_TEMPLATE.md            # Quy chuẩn & checklist kiểm duyệt Pull Request
+├── data/                                   # Thư mục cơ sở dữ liệu và file bảo mật runtime
+│   ├── hethonggiamsat.sqlite               # Cơ sở dữ liệu SQLite lưu telemetry, users, alarms
+│   └── initial_admin.txt                   # Mật khẩu khởi tạo ngẫu nhiên cho admin (chế độ 0600)
+├── esp32/                                  # Mã nguồn Firmware PlatformIO cho trạm đo ESP32
+│   ├── include/                            # Header files định nghĩa giao tiếp & cảm biến
+│   │   ├── alarm_service.h                 # Điều khiển chuông Buzzer và đèn LED trạng thái
+│   │   ├── config.h                        # Khai báo cấu hình chân GPIO, chu kỳ đo và ngưỡng
+│   │   ├── lcd_display.h                   # Điều khiển hiển thị LCD 1602 giao tiếp I2C
+│   │   ├── mq2_sensor.h                    # Đọc và hiệu chuẩn cảm biến khí Gas MQ-2 (ADC)
+│   │   ├── mqtt_service.h                  # Quản lý kết nối & publish JSON telemetry lên MQTT
+│   │   ├── network_settings.h              # Cấu hình mạng WiFi và thông số MQTT Broker
+│   │   ├── secrets.h.example               # Mẫu cấu hình tài khoản WiFi và MQTT
+│   │   ├── sht3x_sensor.h                  # Giao tiếp I2C đọc nhiệt độ và độ ẩm SHT3x
+│   │   ├── system_state.h                  # Cấu trúc trạng thái hệ thống và cờ báo lỗi
+│   │   └── wifi_service.h                  # Quản lý kết nối WiFi và cơ chế tự kết nối lại
+│   ├── src/                                # C++ Source files hiện thực logic trạm biên
+│   │   ├── alarm_service.cpp               # Logic phát chuông cảnh báo và chớp LED
+│   │   ├── lcd_display.cpp                 # Hiển thị thông số đo và IP mạng lên màn hình
+│   │   ├── main.cpp                        # Hàm setup() khởi tạo và loop() điều phối tác vụ
+│   │   ├── mq2_sensor.cpp                  # Đọc ADC GPIO34 và lọc tín hiệu khí gas
+│   │   ├── mqtt_service.cpp                # Đóng gói JSON và publish lên topic air/...
+│   │   ├── network_settings.cpp            # Tải cấu hình mạng từ cấu hình hệ thống
+│   │   ├── sht3x_sensor.cpp                # Gửi lệnh đo và tính toán thông số từ cảm biến
+│   │   └── wifi_service.cpp                # Kết nối WiFi với IP tĩnh / DHCP
+│   ├── platformio.ini                      # Cấu hình PlatformIO (board esp32dev, lib_deps)
+│   └── UPLOAD_ESP32.bat                    # Script batch nạp nhanh firmware trên Windows
+├── include/                                # C++ Header files ứng dụng trung tâm Qt6 (Raspberry Pi)
+│   ├── alarm_service.h                     # Engine cảnh báo, lọc rung Hysteresis và phát tín hiệu
+│   ├── app_config.h                        # Hằng số toàn cục, đường dẫn database, cấu hình mặc định
+│   ├── app_logger.h                        # Hệ thống ghi nhật ký hoạt động (Console & File)
+│   ├── auth_service.h                      # Xác thực, băm mật khẩu PBKDF2-HMAC-SHA256 & phân quyền
+│   ├── csv_exporter.h                      # Tiện ích xuất dữ liệu đo và lịch sử cảnh báo ra CSV
+│   ├── database_manager.h                  # Quản lý kết nối SQLite, schema migration & transaction
+│   ├── models.h                            # Định nghĩa dữ liệu (SensorReading, AlarmRecord, User)
+│   ├── mq2_filter.h                        # Bộ lọc trung bình trượt và thuật toán chống báo động giả
+│   ├── mqtt_service.h                      # Client MQTT dựa trên libmosquitto tích hợp Qt Event Loop
+│   ├── sensor_repository.h                 # Tầng truy xuất dữ liệu cảm biến và sự kiện cảnh báo
+│   └── settings_service.h                  # Quản lý đọc/ghi cấu hình ngưỡng và tham số hệ thống
+├── logs/                                   # Thư mục lưu file nhật ký vận hành hệ thống (app.log)
+├── scripts/                                # Shell scripts tự động hóa build, deploy và vận hành
+│   ├── build_arm64.sh                      # Build cross-compile ứng dụng Qt6 cho ARM64 (Raspberry Pi)
+│   ├── build_deploy_run.sh                 # Tự động hóa toàn trình: Build -> Deploy SSH -> Khởi chạy
+│   ├── configure_qtcreator.sh              # Thiết lập môi trường và cấu hình Kit Qt Creator
+│   ├── deploy_pi.sh                        # Triển khai binary và tài nguyên sang Raspberry Pi qua SSH
+│   ├── git_sync_github.sh                  # Đồng bộ và đẩy mã nguồn lên kho lưu trữ GitHub
+│   ├── qtcreator_build_deploy.sh           # Hook build & deploy tự động tích hợp trong Qt Creator
+│   └── run_from_qtcreator.sh               # Hook khởi chạy ứng dụng trực tiếp từ Qt Creator
+├── src/                                    # C++ Source files ứng dụng trung tâm Qt6
+│   ├── alarm_service.cpp                   # Hiện thực máy trạng thái cảnh báo và chuyển đổi cờ
+│   ├── app_logger.cpp                      # Hiện thực hệ thống log đa cấp có timestamp
+│   ├── auth_service.cpp                    # Hiện thực mã hóa mật khẩu và phân quyền RBAC
+│   ├── csv_exporter.cpp                    # Hiện thực xuất báo cáo dạng bảng CSV chuẩn UTF-8
+│   ├── database_manager.cpp                # Hiện thực tạo bảng, lập chỉ mục và thực thi SQL an toàn
+│   ├── main.cpp                            # Điểm khởi chạy ứng dụng, xử lý tham số CLI & test offscreen
+│   ├── mq2_filter.cpp                      # Thuật toán lọc trung bình cửa sổ trượt (Moving Average)
+│   ├── mqtt_service.cpp                    # Hiện thực parse JSON telemetry và emit Qt signals
+│   ├── sensor_repository.cpp               # Hiện thực lưu trữ và truy vấn dữ liệu từ SQLite
+│   └── settings_service.cpp                # Hiện thực lưu/đọc cấu hình ngưỡng vào CSDL
+├── ui/                                     # Giao diện người dùng Qt Widgets & Pages
+│   ├── alarm_history_page.h/.cpp           # Trang tra cứu nhật ký cảnh báo và xuất file CSV
+│   ├── dashboard_page.h/.cpp               # Trang Dashboard trực quan: đồng hồ đo & đồ thị thời gian thực
+│   ├── history_page.h/.cpp                 # Trang xem lại lịch sử đo cảm biến theo mốc thời gian
+│   ├── login_window.h/.cpp                 # Hộp thoại đăng nhập bảo mật và phân quyền tài khoản
+│   ├── main_window.h/.cpp                  # Cửa sổ chính tích hợp Sidebar điều hướng và Status bar
+│   ├── settings_page.h/.cpp                # Trang cấu hình ngưỡng cảnh báo & kết nối (Dành cho Admin)
+│   └── users_page.h/.cpp                   # Trang quản trị tài khoản người dùng và phân quyền (Admin)
+├── ARCHITECTURE.md                         # Tài liệu thiết kế kiến trúc phân tầng và luồng dữ liệu
+├── CHANGELOG.md                            # Nhật ký chi tiết các thay đổi qua các phiên bản
+├── CMakeLists.txt                          # File cấu hình build hệ thống CMake cho ứng dụng Qt6
+├── CODE_OF_CONDUCT.md                      # Bộ quy tắc ứng xử tiêu chuẩn cho cộng đồng
+├── CONTRIBUTING.md                         # Hướng dẫn quy trình đóng góp mã nguồn và quy chuẩn code
+├── DATABASE_SCHEMA.md                      # Đặc tả cấu trúc bảng, khóa chính/ngoại và index trong SQLite
+├── DEPLOYMENT.md                           # Hướng dẫn chi tiết cài đặt môi trường và triển khai thực tế
+├── ENVIRONMENT_CHECK.md                    # Báo cáo kiểm tra môi trường và tính tương thích phần cứng
+├── HARDWARE.md                             # Danh mục linh kiện, sơ đồ nguyên lý và lưu ý đấu nối mạch
+├── LICENSE                                 # Giấy phép mã nguồn mở MIT License
+├── MQTT_TOPICS.md                          # Tài liệu đặc tả các chủ đề MQTT và định dạng gói tin JSON
+├── README.md                               # Tài liệu hướng dẫn chính của toàn bộ dự án
+├── SECURITY.md                             # Chính sách bảo mật và kênh báo cáo lỗ hổng an toàn
+└── TEST_REPORT.md                          # Báo cáo kết quả kiểm thử tự động, độ ổn định & hiệu năng
 ```
 
 ---
