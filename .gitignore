@@ -1,0 +1,14 @@
+build-*/
+build/
+CMakeLists.txt.user*
+*.user
+.platformio/
+.pio-core/
+.pytools/
+.venv-platformio/
+.pio/
+esp32/.pio/
+data/*
+!data/.gitkeep
+logs/*
+!logs/.gitkeep
