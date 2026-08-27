@@ -52,7 +52,6 @@
   - Cập nhật cảm biến và telemetry mỗi 1 giây.
 - ⏱️ **Watchdog dữ liệu**: báo `DỮ LIỆU QUÁ HẠN` sau 8 giây không nhận telemetry.
 - 🔐 **Tài khoản và phân quyền**:
-  - Mật khẩu được băm bằng PBKDF2-HMAC-SHA256 với salt ngẫu nhiên.
   - `ADMIN` được cấu hình hệ thống và quản lý tài khoản; `USER` chỉ xem dữ liệu.
   - Có nút **Đăng xuất** để kết thúc phiên và quay lại màn hình đăng nhập.
 - 💾 **SQLite và CSV**: lưu dữ liệu đo, trạng thái, lịch sử cảnh báo và hỗ trợ xuất CSV.
