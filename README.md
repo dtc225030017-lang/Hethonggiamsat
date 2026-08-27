@@ -3,7 +3,7 @@
 # 🌿 HỆ THỐNG GIÁM SÁT CHẤT LƯỢNG KHÔNG KHÍ
 ### Real-Time Air Quality Monitoring & Multi-Sensor Alarm System
 
-[![CI Build & Verification](https://github.com/blynkapp04-ui/Hethonggiamsat/actions/workflows/ci.yml/badge.svg)](https://github.com/blynkapp04-ui/Hethonggiamsat/actions/workflows/ci.yml)
+[![CI Build & Verification](https://github.com/dtc225030017-lang/Hethonggiamsat/actions/workflows/ci.yml/badge.svg)](https://github.com/dtc225030017-lang/Hethonggiamsat/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B)](https://en.cppreference.com/w/cpp/17)
 [![Qt Version](https://img.shields.io/badge/Qt-6.5.1-41CD52?logo=qt)](https://www.qt.io/)
