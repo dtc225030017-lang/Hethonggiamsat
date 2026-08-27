@@ -43,6 +43,9 @@ jobs:
             cmake \
             ninja-build \
             qt6-base-dev \
+            libgl1-mesa-dev \
+            libgl-dev \
+            libxkbcommon-dev \
             libqt6sql6-sqlite \
             libmosquitto-dev \
             libsqlite3-dev
