@@ -13,6 +13,7 @@
 #include "users_page.h"
 
 #include <QMessageBox>
+#include <QPushButton>
 #include <QStatusBar>
 #include <QTabWidget>
 #include <QTimer>
@@ -60,6 +61,18 @@ MainWindow::MainWindow(DatabaseManager &db, AuthService &auth,
     setMinimumSize(980, 680);
     statusBar()->showMessage(QStringLiteral("Đã đăng nhập: %1  •  %2")
                                  .arg(session_.username, session_.role));
+    auto *logoutButton = new QPushButton(QStringLiteral("Đăng xuất"));
+    logoutButton->setObjectName(QStringLiteral("logoutButton"));
+    logoutButton->setToolTip(QStringLiteral("Kết thúc phiên và quay lại đăng nhập"));
+    statusBar()->addPermanentWidget(logoutButton);
+    connect(logoutButton, &QPushButton::clicked, this, [this] {
+        if (QMessageBox::question(this, QStringLiteral("Đăng xuất"),
+                QStringLiteral("Đăng xuất khỏi tài khoản %1?").arg(session_.username),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+            == QMessageBox::Yes) {
+            emit logoutRequested();
+        }
+    });
 
     connect(mqtt_, &MqttService::connectedChanged,
             dashboard_, &DashboardPage::setMqttConnected);
@@ -69,9 +82,11 @@ MainWindow::MainWindow(DatabaseManager &db, AuthService &auth,
             dashboard_, &DashboardPage::setDeviceStatus);
     connect(mqtt_, &MqttService::alarmReceived, this,
             [this](const QString &type, double value, double threshold) {
-                // MQ-2 alarms are created from the filtered telemetry stream.
-                // Accepting this topic would bypass the confirmation window.
-                if (type.startsWith(QStringLiteral("MQ2"), Qt::CaseInsensitive))
+                // Sensor alarms are created from telemetry so one transition
+                // cannot be inserted twice into the history table.
+                if (type.startsWith(QStringLiteral("MQ2"), Qt::CaseInsensitive)
+                    || type.startsWith(QStringLiteral("TEMP"), Qt::CaseInsensitive)
+                    || type.startsWith(QStringLiteral("HUMIDITY"), Qt::CaseInsensitive))
                     return;
                 QString error;
                 if (!alarmService_->externalAlarm(type, value, threshold, &error))
@@ -107,7 +122,7 @@ void MainWindow::onSensor(const SensorReading &reading)
 {
     lastReading_ = QDateTime::currentDateTime();
     SensorReading stable = reading;
-    int alarmThreshold = settings_.mq2Threshold;
+    double alarmThreshold = settings_.mq2Threshold;
     bool pending = false;
 
     if (!reading.mq2DigitalMode) {
@@ -124,8 +139,21 @@ void MainWindow::onSensor(const SensorReading &reading)
         stable.mq2Mv = 0;
         stable.alarm = false;
     }
-    stable.alarmType = stable.alarm ? QStringLiteral("MQ2_HIGH")
-                                    : QStringLiteral("NONE");
+    if (stable.alarm) {
+        if (stable.alarmType == QStringLiteral("TEMP_HIGH"))
+            alarmThreshold = settings_.temperatureHigh;
+        else if (stable.alarmType == QStringLiteral("HUMIDITY_HIGH"))
+            alarmThreshold = settings_.humidityHigh;
+        else if (stable.alarmType == QStringLiteral("HUMIDITY_LOW"))
+            alarmThreshold = settings_.humidityLow;
+        else {
+            stable.alarmType = QStringLiteral("MQ2_HIGH");
+            alarmThreshold = reading.mq2Threshold > 0
+                ? reading.mq2Threshold : settings_.mq2Threshold;
+        }
+    } else {
+        stable.alarmType = QStringLiteral("NONE");
+    }
     stable.status = stable.alarm ? QStringLiteral("ALARM")
                                  : QStringLiteral("NORMAL");
 

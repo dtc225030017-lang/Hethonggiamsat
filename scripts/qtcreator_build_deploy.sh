@@ -9,4 +9,3 @@ export CMAKE_GENERATOR="Ninja"
 "${PROJECT_ROOT}/scripts/deploy_pi.sh"
 
 echo "Qt Creator: ARM64 build and Raspberry Pi deployment completed."
-

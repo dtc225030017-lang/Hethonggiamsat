@@ -1,10 +1,9 @@
 <div align="center">
 
-# 🌿 HỆ THỐNG GIÁM SÁT CHẤT LƯỢNG KHÔNG KHÍ & CẢNH BÁO KHÍ GAS
-### Real-Time Air Quality & Gas Monitoring System
+# 🌿 HỆ THỐNG GIÁM SÁT CHẤT LƯỢNG KHÔNG KHÍ
+### Real-Time Air Quality Monitoring & Multi-Sensor Alarm System
 
 [![CI Build & Verification](https://github.com/blynkapp04-ui/Hethonggiamsat/actions/workflows/ci.yml/badge.svg)](https://github.com/blynkapp04-ui/Hethonggiamsat/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/blynkapp04-ui/Hethonggiamsat?color=blue&logo=github)](https://github.com/blynkapp04-ui/Hethonggiamsat/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B)](https://en.cppreference.com/w/cpp/17)
 [![Qt Version](https://img.shields.io/badge/Qt-6.5.1-41CD52?logo=qt)](https://www.qt.io/)
@@ -13,16 +12,16 @@
 [![Database](https://img.shields.io/badge/Database-SQLite3-003B57?logo=sqlite)](https://www.sqlite.org/)
 
 <p align="center">
-  <b>Hệ thống giám sát chất lượng không khí, nhiệt độ, độ ẩm và nồng độ khí gas công nghiệp thời gian thực</b><br>
-  Tích hợp trạm đo biên ESP32, truyền thông bảo mật MQTT Mosquitto, máy chủ trung tâm Raspberry Pi 4 chạy ứng dụng Qt 6 GUI hiện đại và cơ sở dữ liệu SQLite3.
+  <b>Giám sát nhiệt độ, độ ẩm và khí gas/khói theo thời gian thực</b><br>
+  ESP32 thu thập dữ liệu và cảnh báo tại chỗ; Raspberry Pi 4 chạy ứng dụng Qt 6,
+  MQTT Mosquitto và SQLite để hiển thị, cấu hình và lưu lịch sử.
 </p>
 
 [Tính Năng](#-tính-năng-nổi-bật) •
 [Kiến Trúc](#-kiến-trúc-hệ-thống) •
 [Phần Cứng](#-phần-cứng--sơ-đồ-chân) •
 [Cài Đặt & Chạy](#-hướng-dẫn-cài-đặt--vận-hành) •
-[Tài Liệu Kỹ Thuật](#-tài-liệu-kỹ-thuật-chi-tiết) •
-[Đóng Góp](#-đóng-góp)
+[Cấu Trúc](#-cấu-trúc-mã-nguồn-repository-layout)
 
 ---
 
@@ -30,249 +29,348 @@
 
 ## 🌟 Tính Năng Nổi Bật
 
-- 📊 **Dashboard Thời Gian Thực**: Đồng hồ đo trực quan, biểu đồ thời gian thực duy trì 300 mẫu gần nhất của Nhiệt độ (°C), Độ ẩm (%RH) và Nồng độ khí gas (ADC).
-- 🚨 **Cơ Chế Cảnh Báo Kép (Local & Central Alarms)**:
-  - **Tại trạm đo ESP32**: Cảnh báo tức thì bằng còi Buzzer & đèn LED trạng thái khi vượt ngưỡng, không phụ thuộc vào kết nối mạng.
-  - **Tại trung tâm Raspberry Pi**: Bộ lọc chống rung tín hiệu (Hysteresis 50 ADC, 5 chu kỳ ổn định) chuyển đổi trạng thái `ACTIVE` / `ENDED`.
-- ⏱️ **Giám Sát Mất Tín Hiệu (Watchdog Timer)**: Tự động phát hiện và cảnh báo trạng thái `DATA STALE` sau 8 giây không nhận được telemetry từ cảm biến.
-- 🔐 **Bảo Mật Đa Cấp Phân Quyền**:
-  - Mã hóa mật khẩu người dùng theo chuẩn công nghiệp **PBKDF2-HMAC-SHA256** (120.000 vòng lặp kèm salt ngẫu nhiên).
-  - Tự động sinh mật khẩu ngẫu nhiên cho tài khoản `admin` lần đầu tại `data/initial_admin.txt` (permission `0600`).
-  - Phân quyền nghiêm ngặt giữa vai trò `ADMIN` (cấu hình ngưỡng, quản lý người dùng) và `USER` (chỉ xem dashboard và lịch sử).
-- 💾 **Lưu Trữ & Xuất Dữ Liệu**:
-  - Cơ sở dữ liệu SQLite3 giao tác an toàn (Transaction & Prepared Statements chống SQL Injection).
-  - Giới hạn tần suất ghi tối ưu I/O thẻ nhớ SD trên Raspberry Pi.
-  - Xuất dữ liệu báo cáo lịch sử đo và nhật ký cảnh báo ra file `.csv`.
-- 🛠️ **Kiểm Thử Tự Động Tích Hợp Sẵn**: Hỗ trợ `--self-test`, `--mqtt-test` và `--integration-test` chạy ở chế độ offscreen.
+- 📊 **Dashboard thời gian thực**:
+  - Hiển thị nhiệt độ, độ ẩm, MQ-2 theo đơn vị ADC và mV.
+  - Ba biểu đồ giữ tối đa 300 mẫu gần nhất.
+  - Hiển thị trạng thái ESP32, MQTT và thời điểm nhận dữ liệu cuối.
+- 🚨 **Bốn loại cảnh báo độc lập**:
+  - `MQ2_HIGH`: khí gas/khói vượt ngưỡng ADC.
+  - `TEMP_HIGH`: nhiệt độ vượt ngưỡng cao.
+  - `HUMIDITY_HIGH`: độ ẩm vượt ngưỡng cao.
+  - `HUMIDITY_LOW`: độ ẩm xuống dưới ngưỡng thấp.
+- 🔔 **Cảnh báo tại ESP32**:
+  - Khi có bất kỳ cảnh báo nào: bật còi, bật LED đỏ và tắt LED xanh.
+  - Khi mọi thông số an toàn liên tục 3 giây: tắt còi/LED đỏ và bật LED xanh.
+  - Hoạt động tại chỗ ngay cả khi Wi-Fi hoặc MQTT bị mất kết nối.
+  - Thứ tự ưu tiên: MQ-2 → nhiệt độ cao → độ ẩm cao → độ ẩm thấp.
+- 🎚️ **Cấu hình từ ứng dụng**:
+  - Ngưỡng mặc định: MQ-2 `2500 ADC`, nhiệt độ `50 °C`, độ ẩm cao `90%`, độ ẩm thấp `20%`.
+  - ADMIN có thể chỉnh ngưỡng và gửi xuống ESP32 qua MQTT.
+- 🧪 **MQ-2 chống nhiễu**:
+  - Đọc chân AO trên GPIO34 với độ phân giải ADC 12-bit.
+  - Mỗi chu kỳ lấy trung bình 30 mẫu, cách nhau 5 ms.
+  - Cập nhật cảm biến và telemetry mỗi 1 giây.
+- ⏱️ **Watchdog dữ liệu**: báo `DỮ LIỆU QUÁ HẠN` sau 8 giây không nhận telemetry.
+- 🔐 **Tài khoản và phân quyền**:
+  - Mật khẩu được băm bằng PBKDF2-HMAC-SHA256 với salt ngẫu nhiên.
+  - `ADMIN` được cấu hình hệ thống và quản lý tài khoản; `USER` chỉ xem dữ liệu.
+  - Có nút **Đăng xuất** để kết thúc phiên và quay lại màn hình đăng nhập.
+- 💾 **SQLite và CSV**: lưu dữ liệu đo, trạng thái, lịch sử cảnh báo và hỗ trợ xuất CSV.
+- 🛠️ **Kiểm thử tích hợp**: hỗ trợ `--self-test`, `--mqtt-test` và `--integration-test`.
 
 ---
 
 ## 🏗️ Kiến Trúc Hệ Thống
 
 ```mermaid
-graph TD
-    subgraph "Trạm Đo Cảm Biến (Edge Node)"
-        SHT3X["Cảm biến SHT3x<br/>(Nhiệt độ / Độ ẩm)"] -->|I2C| ESP32["ESP32 Microcontroller"]
-        MQ2["Cảm biến MQ-2<br/>(Khí Gas / Khói)"] -->|ADC GPIO34| ESP32
-        ESP32 -->|I2C| LCD["Màn hình LCD 1602"]
-        ESP32 -->|GPIO| ALARM_HW["Còi Buzzer & LED Cảnh Báo"]
+flowchart TD
+    subgraph EDGE["Trạm cảm biến ESP32"]
+        SHT["SHT3x<br/>Nhiệt độ / Độ ẩm"] -->|I2C| ESP["ESP32"]
+        MQ2["MQ-2 AO<br/>Gas / Khói"] -->|Chia áp → GPIO34 ADC| ESP
+        ESP -->|I2C| LCD["LCD 1602"]
+        ESP -->|GPIO| ALERT["Còi + LED đỏ/xanh"]
     end
 
-    subgraph "Tầng Truyền Thông (Communication Layer)"
-        ESP32 -->|WiFi / JSON Telemetry| MOSQ["MQTT Broker Mosquitto<br/>(Port 1883 - Topic air/...)"]
-    end
+    ESP -->|Wi-Fi / JSON| BROKER["Mosquitto MQTT<br/>air/..."]
 
-    subgraph "Máy Chủ Trung Tâm (Raspberry Pi 4 - ARM64)"
-        MOSQ -->|libmosquitto| MQTT_SVC["MqttService (Qt6)"]
-        MQTT_SVC --> APP_CORE["Core Engine & Alarm Filter"]
-        APP_CORE -->|Auth / Prepared SQL| SQLITE[("SQLite Database<br/>data/hethonggiamsat.sqlite")]
-        APP_CORE --> UI["Qt 6.5.1 Desktop GUI<br/>(Dashboard / Chart / Logs / Users)"]
-        AUTH["AuthService<br/>PBKDF2-HMAC-SHA256"] --- UI
+    subgraph PI["Raspberry Pi 4 ARM64"]
+        BROKER --> MQTT["Qt MqttService / libmosquitto"]
+        MQTT --> CORE["Xử lý cảnh báo và cấu hình"]
+        CORE --> DB[("SQLite3")]
+        CORE --> GUI["Qt 6 Widgets GUI"]
+        AUTH["Đăng nhập / RBAC"] --> GUI
     end
 ```
+
+Luồng cấu hình đi theo chiều ngược lại: ứng dụng Qt lưu cấu hình, publish các ngưỡng
+lên MQTT, ESP32 nhận ngưỡng mới và áp dụng cho cảnh báo tại chỗ.
 
 ---
 
 ## 🔌 Phần Cứng & Sơ Đồ Chân
 
-Chi tiết danh mục linh kiện và sơ đồ đấu nối: Xem thêm tại [HARDWARE.md](HARDWARE.md).
-
-| Linh Kiện | Giao Tiếp | Chân ESP32 (DevKit) | Chức Năng |
+| Linh kiện | Giao tiếp | Chân ESP32 | Chức năng |
 | :--- | :--- | :--- | :--- |
-| **SHT3x** | I2C (0x44) | SDA: `GPIO 21`, SCL: `GPIO 22` | Đo nhiệt độ & độ ẩm chính xác cao |
-| **LCD 1602 I2C** | I2C (0x27) | SDA: `GPIO 21`, SCL: `GPIO 22` | Hiển thị thông số tại hiện trường |
-| **MQ-2** | Analog (AO) | `GPIO 34` (ADC1_CH6) | Đo nồng độ khí gas / khói |
-| **Active Buzzer** | Digital OUT | `GPIO 25` | Phát âm thanh cảnh báo vượt ngưỡng |
-| **LED Đỏ (Cảnh Báo)**| Digital OUT | `GPIO 26` | Đèn đỏ nhấp nháy khi có sự cố |
-| **LED Xanh (Trạng Thái)**| Digital OUT | `GPIO 27` | Đèn xanh báo hệ thống sẵn sàng |
+| **SHT3x** | I2C `0x44` | SDA `GPIO21`, SCL `GPIO22` | Đo nhiệt độ và độ ẩm |
+| **LCD 1602 I2C** | I2C `0x27` | SDA `GPIO21`, SCL `GPIO22` | Hiển thị số đo/cảnh báo tại chỗ |
+| **MQ-2** | Analog `AO` | `GPIO34` (`ADC1_CH6`) | Đo mức khí gas/khói |
+| **Active Buzzer** | Digital OUT | `GPIO25` | Âm thanh cảnh báo |
+| **LED xanh** | Digital OUT | `GPIO26` | Hệ thống bình thường |
+| **LED đỏ** | Digital OUT | `GPIO27` | Hệ thống đang cảnh báo |
+
+### Đấu MQ-2 an toàn
+
+MQ-2 được cấp `5V`, nhưng GPIO ESP32 chỉ chịu mức điện áp khoảng `3.3V`. Không nối
+AO trực tiếp vào GPIO34. Dùng bộ chia áp và nối chung GND:
+
+```text
+MQ-2 AO ── 10kΩ ──●──── GPIO34 ESP32
+                   │
+                  20kΩ
+                   │
+MQ-2 GND ──────────┴──── GND ESP32
+```
+
+- MQ-2 `VCC` → nguồn `5V` ổn định.
+- MQ-2 `GND` → GND ESP32.
+- MQ-2 `AO` → điện trở `10kΩ` → điểm giữa `●`.
+- Điểm giữa `●` → GPIO34 và điện trở `20kΩ` xuống GND.
+- Chân `DO` không được firmware hiện tại sử dụng.
 
 ---
 
 ## 🚀 Hướng Dẫn Cài Đặt & Vận Hành
 
-### 1. Yêu Cầu Môi Trường (Prerequisites)
+### 1. Môi Trường Hiện Tại
 
-- **Raspberry Pi 4 Model B** chạy hệ điều hành Raspberry Pi OS (Debian 12 Bookworm 64-bit).
-- **Qt 6.5.1** cài đặt tại `/usr/local/qt6`.
-- **Mosquitto MQTT Broker** (`sudo apt install mosquitto mosquitto-clients`).
-- **CMake 3.18+**, **Ninja**, **GCC/G++ 12+**.
-- **PlatformIO Core / VSCode** để nạp firmware ESP32.
+| Thành phần | Giá trị |
+| :--- | :--- |
+| Source host Ubuntu VM | `/home/pi/Duy/Hethonggiamsat` |
+| Source ESP32 Windows | `C:\Users\admin\Documents\PlatformIO\Projects\Hethonggiamsat-esp32` |
+| Raspberry Pi đích | `pi@192.168.137.227` |
+| Thư mục chạy trên Pi | `/home/pi/Duy/Hethonggiamsat` |
+| Qt runtime trên Pi | `/usr/local/qt6` |
+| Cổng MQTT mặc định | `1883` |
 
----
+Yêu cầu host: CMake 3.18+, Ninja, bộ cross-toolchain ARM64/Qt 6.5.1 và SSH key
+truy cập Pi. ESP32 được build/nạp bằng PlatformIO trên **Windows**, không nạp từ
+Ubuntu VM.
 
-### 2. Build & Triển Khai Ứng Dụng Qt (Raspberry Pi 4)
+### 2. Build, Deploy và Run Host bằng Qt Creator
 
-#### A. Cross-Compile từ máy Host hoặc Build trực tiếp trên Raspberry Pi:
+Mở `CMakeLists.txt` bằng Qt Creator và chọn kit:
+
+```text
+Hethonggiamsat - Raspberry Pi 4 ARM64
+```
+
+Sau đó chỉ cần bấm **Run**. Cấu hình hiện tại thực hiện tự động:
+
+```text
+Cross-build ARM64
+        ↓
+Deploy binary qua SSH tới Raspberry Pi thật
+        ↓
+Dừng instance cũ và chạy giao diện mới trên DISPLAY=:0 của Pi
+```
+
+Các script Qt Creator sử dụng:
+
+- `scripts/qtcreator_build_deploy.sh`: gọi cross-build và deploy.
+- `scripts/build_arm64.sh`: tạo binary ARM64 trong `build-arm64-qtcreator/`.
+- `scripts/deploy_pi.sh`: chép binary tới Pi qua SSH.
+- `scripts/run_from_qtcreator.sh`: chạy ứng dụng trên màn hình Pi thật.
+
+ESP32 không nằm trong Build Step này. Firmware được nạp riêng trên Windows.
+
+### 3. Build/Deploy Host bằng Terminal
+
 ```bash
 cd /home/pi/Duy/Hethonggiamsat
 
-# Cross-build cho ARM64
-./scripts/build_arm64.sh
+# Cross-build và deploy
+./scripts/qtcreator_build_deploy.sh
 
-# Deploy sang Raspberry Pi qua SSH
-./scripts/deploy_pi.sh
+# Hoặc build, deploy và yêu cầu chạy dạng nền
+./scripts/build_deploy_run.sh
 ```
 
-#### B. Khởi chạy ứng dụng với giao diện đồ họa:
+Chạy trực tiếp trên Pi khi cần kiểm tra thủ công:
+
 ```bash
-ssh pi@192.168.137.227
 cd /home/pi/Duy/Hethonggiamsat
-LD_LIBRARY_PATH=/usr/local/qt6/lib QT_PLUGIN_PATH=/usr/local/qt6/plugins DISPLAY=:0 ./Hethonggiamsat
+DISPLAY=:0 \
+LD_LIBRARY_PATH=/usr/local/qt6/lib \
+QT_PLUGIN_PATH=/usr/local/qt6/plugins \
+./Hethonggiamsat
 ```
 
-#### C. Chạy Kiểm Thử Tự Động (Self-test offscreen):
+### 4. Nạp Firmware ESP32 trên Windows
+
+Mở project:
+
+```text
+C:\Users\admin\Documents\PlatformIO\Projects\Hethonggiamsat-esp32
+```
+
+1. Kiểm tra `include/secrets.h` có đúng Wi-Fi và tài khoản MQTT.
+2. Kết nối ESP32 vào Windows hoặc chọn **Connect to host** trong VMware.
+3. Trong PlatformIO chọn đúng cổng COM.
+4. Bấm **Upload**, hoặc chạy `UPLOAD_ESP32.bat` trong thư mục project.
+5. Mở Serial Monitor ở `115200 baud` để kiểm tra log.
+
+Firmware đã có đầy đủ cảnh báo MQ-2, nhiệt độ cao, độ ẩm cao và độ ẩm thấp.
+
+### 5. Cấu Hình Ngưỡng Trên Giao Diện
+
+Đăng nhập bằng tài khoản `ADMIN`, mở tab **Cài đặt**, nhập:
+
+- Ngưỡng MQ-2: `1–4095 ADC`.
+- Nhiệt độ cao: `-20–100 °C`.
+- Độ ẩm cao: `0–100%`.
+- Độ ẩm thấp: `0–100%` và phải nhỏ hơn ngưỡng độ ẩm cao.
+- Chu kỳ lưu database: `1–3600 giây`.
+
+Bấm **Lưu và gửi xuống ESP32**. Ứng dụng lưu cấu hình vào SQLite và publish:
+
+```text
+air/config/mq2_ao_threshold
+air/config/temp_high
+air/config/humidity_high
+air/config/humidity_low
+```
+
+### 6. Kiểm Thử Host Trên Raspberry Pi
+
 ```bash
-# Kiểm tra toàn diện các module chức năng
-QT_QPA_PLATFORM=offscreen LD_LIBRARY_PATH=/usr/local/qt6/lib \
-QT_PLUGIN_PATH=/usr/local/qt6/plugins ./Hethonggiamsat --self-test
+cd /home/pi/Duy/Hethonggiamsat
 
-# Kiểm tra kết nối và subscribe/publish MQTT broker
-QT_QPA_PLATFORM=offscreen LD_LIBRARY_PATH=/usr/local/qt6/lib \
-QT_PLUGIN_PATH=/usr/local/qt6/plugins ./Hethonggiamsat --mqtt-test
-
-# Chạy integration test trong 10 giây
-QT_QPA_PLATFORM=offscreen LD_LIBRARY_PATH=/usr/local/qt6/lib \
-QT_PLUGIN_PATH=/usr/local/qt6/plugins ./Hethonggiamsat --integration-test
+QT_QPA_PLATFORM=offscreen \
+LD_LIBRARY_PATH=/usr/local/qt6/lib \
+QT_PLUGIN_PATH=/usr/local/qt6/plugins \
+./Hethonggiamsat --self-test
 ```
 
----
+Các chế độ bổ sung:
 
-### 3. Nạp Firmware Cho ESP32 (PlatformIO)
+```bash
+./Hethonggiamsat --mqtt-test
+./Hethonggiamsat --integration-test
+```
 
-1. Sao chép file cấu hình bảo mật:
-   ```bash
-   cp esp32/include/secrets.h.example esp32/include/secrets.h
-   ```
-2. Điền thông tin WiFi (`WIFI_SSID`, `WIFI_PASSWORD`) và thông tin tài khoản MQTT.
-3. Build và nạp firmware:
-   ```bash
-   cd esp32
-   # Trên Linux/macOS
-   pio run --target upload
-   
-   # Hoặc trên Windows
-   UPLOAD_ESP32.bat
-   ```
+Khi chạy hai lệnh này trên Pi, cũng cần đặt `LD_LIBRARY_PATH` và `QT_PLUGIN_PATH`
+như lệnh self-test phía trên.
 
 ---
 
 ## 📚 Tài Liệu Kỹ Thuật Chi Tiết
 
-Mọi khía cạnh kiến trúc và vận hành đều được lập tài liệu kỹ thuật đầy đủ:
+README này là tài liệu vận hành chính và được cập nhật theo hệ thống hiện tại.
+Những nguồn cấu hình quan trọng:
 
-- 🏛️ [ARCHITECTURE.md](ARCHITECTURE.md): Kiến trúc phân tầng, luồng xử lý và cơ chế an toàn.
-- 🔌 [HARDWARE.md](HARDWARE.md): Bảng thông số linh kiện, sơ đồ nguyên lý và lưu ý nguồn điện.
-- 📡 [MQTT_TOPICS.md](MQTT_TOPICS.md): Cấu trúc JSON payload và định danh topic MQTT.
-- 🗄️ [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md): Cấu trúc bảng SQLite, index và các trigger toàn vẹn.
-- 🚀 [DEPLOYMENT.md](DEPLOYMENT.md): Hướng dẫn thiết lập Kit Qt Creator, build script và service.
-- 🧪 [TEST_REPORT.md](TEST_REPORT.md): Nhật ký kiểm thử, kết quả đo hiệu năng và độ ổn định.
+- `CMakeLists.txt`: target Qt 6.5/C++17 và các thư viện liên kết.
+- `CMakeLists.txt.user`: kit, Build Step và Run Configuration của Qt Creator trên máy hiện tại.
+- `esp32/platformio.ini`: board, framework và thư viện firmware.
+- `esp32/include/config.h`: chân GPIO, chu kỳ lấy mẫu và ngưỡng mặc định.
+- `esp32/include/secrets.h.example`: mẫu cấu hình Wi-Fi/MQTT; không chứa mật khẩu thật.
+- `.github/workflows/ci.yml`: quy trình build/kiểm tra CI.
+
+Không commit hoặc chia sẻ `esp32/include/secrets.h`, database runtime, log hay file
+`data/initial_admin.txt`.
 
 ---
 
 ## 📁 Cấu Trúc Mã Nguồn (Repository Layout)
 
+Thư mục gốc của dự án trên Ubuntu VM:
+
 ```text
-.
-├── .github/                                # Cấu hình GitHub Actions, Issue & PR Templates
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.yml                  # Mẫu báo cáo lỗi phần mềm / phần cứng
-│   │   ├── config.yml                      # Cấu hình chuyển hướng hỗ trợ GitHub
-│   │   └── feature_request.yml             # Mẫu đề xuất tính năng & cải tiến mới
-│   ├── workflows/
-│   │   ├── ci.yml                          # Workflow kiểm thử & build CI cho Qt6 và PlatformIO
-│   │   └── release.yml                     # Tự động đóng gói release artifacts khi gắn tag
-│   ├── dependabot.yml                      # Cấu hình tự động cập nhật GitHub Actions
-│   └── PULL_REQUEST_TEMPLATE.md            # Quy chuẩn & checklist kiểm duyệt Pull Request
-├── data/                                   # Thư mục cơ sở dữ liệu và file bảo mật runtime
-│   ├── hethonggiamsat.sqlite               # Cơ sở dữ liệu SQLite lưu telemetry, users, alarms
-│   └── initial_admin.txt                   # Mật khẩu khởi tạo ngẫu nhiên cho admin (chế độ 0600)
-├── esp32/                                  # Mã nguồn Firmware PlatformIO cho trạm đo ESP32
-│   ├── include/                            # Header files định nghĩa giao tiếp & cảm biến
-│   │   ├── alarm_service.h                 # Điều khiển chuông Buzzer và đèn LED trạng thái
-│   │   ├── config.h                        # Khai báo cấu hình chân GPIO, chu kỳ đo và ngưỡng
-│   │   ├── lcd_display.h                   # Điều khiển hiển thị LCD 1602 giao tiếp I2C
-│   │   ├── mq2_sensor.h                    # Đọc và hiệu chuẩn cảm biến khí Gas MQ-2 (ADC)
-│   │   ├── mqtt_service.h                  # Quản lý kết nối & publish JSON telemetry lên MQTT
-│   │   ├── network_settings.h              # Cấu hình mạng WiFi và thông số MQTT Broker
-│   │   ├── secrets.h.example               # Mẫu cấu hình tài khoản WiFi và MQTT
-│   │   ├── sht3x_sensor.h                  # Giao tiếp I2C đọc nhiệt độ và độ ẩm SHT3x
-│   │   ├── system_state.h                  # Cấu trúc trạng thái hệ thống và cờ báo lỗi
-│   │   └── wifi_service.h                  # Quản lý kết nối WiFi và cơ chế tự kết nối lại
-│   ├── src/                                # C++ Source files hiện thực logic trạm biên
-│   │   ├── alarm_service.cpp               # Logic phát chuông cảnh báo và chớp LED
-│   │   ├── lcd_display.cpp                 # Hiển thị thông số đo và IP mạng lên màn hình
-│   │   ├── main.cpp                        # Hàm setup() khởi tạo và loop() điều phối tác vụ
-│   │   ├── mq2_sensor.cpp                  # Đọc ADC GPIO34 và lọc tín hiệu khí gas
-│   │   ├── mqtt_service.cpp                # Đóng gói JSON và publish lên topic air/...
-│   │   ├── network_settings.cpp            # Tải cấu hình mạng từ cấu hình hệ thống
-│   │   ├── sht3x_sensor.cpp                # Gửi lệnh đo và tính toán thông số từ cảm biến
-│   │   └── wifi_service.cpp                # Kết nối WiFi với IP tĩnh / DHCP
-│   ├── platformio.ini                      # Cấu hình PlatformIO (board esp32dev, lib_deps)
-│   └── UPLOAD_ESP32.bat                    # Script batch nạp nhanh firmware trên Windows
-├── include/                                # C++ Header files ứng dụng trung tâm Qt6 (Raspberry Pi)
-│   ├── alarm_service.h                     # Engine cảnh báo, lọc rung Hysteresis và phát tín hiệu
-│   ├── app_config.h                        # Hằng số toàn cục, đường dẫn database, cấu hình mặc định
-│   ├── app_logger.h                        # Hệ thống ghi nhật ký hoạt động (Console & File)
-│   ├── auth_service.h                      # Xác thực, băm mật khẩu PBKDF2-HMAC-SHA256 & phân quyền
-│   ├── csv_exporter.h                      # Tiện ích xuất dữ liệu đo và lịch sử cảnh báo ra CSV
-│   ├── database_manager.h                  # Quản lý kết nối SQLite, schema migration & transaction
-│   ├── models.h                            # Định nghĩa dữ liệu (SensorReading, AlarmRecord, User)
-│   ├── mq2_filter.h                        # Bộ lọc trung bình trượt và thuật toán chống báo động giả
-│   ├── mqtt_service.h                      # Client MQTT dựa trên libmosquitto tích hợp Qt Event Loop
-│   ├── sensor_repository.h                 # Tầng truy xuất dữ liệu cảm biến và sự kiện cảnh báo
-│   └── settings_service.h                  # Quản lý đọc/ghi cấu hình ngưỡng và tham số hệ thống
-├── logs/                                   # Thư mục lưu file nhật ký vận hành hệ thống (app.log)
-├── scripts/                                # Shell scripts tự động hóa build, deploy và vận hành
-│   ├── build_arm64.sh                      # Build cross-compile ứng dụng Qt6 cho ARM64 (Raspberry Pi)
-│   ├── build_deploy_run.sh                 # Tự động hóa toàn trình: Build -> Deploy SSH -> Khởi chạy
-│   ├── configure_qtcreator.sh              # Thiết lập môi trường và cấu hình Kit Qt Creator
-│   ├── deploy_pi.sh                        # Triển khai binary và tài nguyên sang Raspberry Pi qua SSH
-│   ├── git_sync_github.sh                  # Đồng bộ và đẩy mã nguồn lên kho lưu trữ GitHub
-│   ├── qtcreator_build_deploy.sh           # Hook build & deploy tự động tích hợp trong Qt Creator
-│   └── run_from_qtcreator.sh               # Hook khởi chạy ứng dụng trực tiếp từ Qt Creator
-├── src/                                    # C++ Source files ứng dụng trung tâm Qt6
-│   ├── alarm_service.cpp                   # Hiện thực máy trạng thái cảnh báo và chuyển đổi cờ
-│   ├── app_logger.cpp                      # Hiện thực hệ thống log đa cấp có timestamp
-│   ├── auth_service.cpp                    # Hiện thực mã hóa mật khẩu và phân quyền RBAC
-│   ├── csv_exporter.cpp                    # Hiện thực xuất báo cáo dạng bảng CSV chuẩn UTF-8
-│   ├── database_manager.cpp                # Hiện thực tạo bảng, lập chỉ mục và thực thi SQL an toàn
-│   ├── main.cpp                            # Điểm khởi chạy ứng dụng, xử lý tham số CLI & test offscreen
-│   ├── mq2_filter.cpp                      # Thuật toán lọc trung bình cửa sổ trượt (Moving Average)
-│   ├── mqtt_service.cpp                    # Hiện thực parse JSON telemetry và emit Qt signals
-│   ├── sensor_repository.cpp               # Hiện thực lưu trữ và truy vấn dữ liệu từ SQLite
-│   └── settings_service.cpp                # Hiện thực lưu/đọc cấu hình ngưỡng vào CSDL
-├── ui/                                     # Giao diện người dùng Qt Widgets & Pages
-│   ├── alarm_history_page.h/.cpp           # Trang tra cứu nhật ký cảnh báo và xuất file CSV
-│   ├── dashboard_page.h/.cpp               # Trang Dashboard trực quan: đồng hồ đo & đồ thị thời gian thực
-│   ├── history_page.h/.cpp                 # Trang xem lại lịch sử đo cảm biến theo mốc thời gian
-│   ├── login_window.h/.cpp                 # Hộp thoại đăng nhập bảo mật và phân quyền tài khoản
-│   ├── main_window.h/.cpp                  # Cửa sổ chính tích hợp Sidebar điều hướng và Status bar
-│   ├── settings_page.h/.cpp                # Trang cấu hình ngưỡng cảnh báo & kết nối (Dành cho Admin)
-│   └── users_page.h/.cpp                   # Trang quản trị tài khoản người dùng và phân quyền (Admin)
-├── ARCHITECTURE.md                         # Tài liệu thiết kế kiến trúc phân tầng và luồng dữ liệu
-├── CHANGELOG.md                            # Nhật ký chi tiết các thay đổi qua các phiên bản
-├── CMakeLists.txt                          # File cấu hình build hệ thống CMake cho ứng dụng Qt6
-├── CODE_OF_CONDUCT.md                      # Bộ quy tắc ứng xử tiêu chuẩn cho cộng đồng
-├── CONTRIBUTING.md                         # Hướng dẫn quy trình đóng góp mã nguồn và quy chuẩn code
-├── DATABASE_SCHEMA.md                      # Đặc tả cấu trúc bảng, khóa chính/ngoại và index trong SQLite
-├── DEPLOYMENT.md                           # Hướng dẫn chi tiết cài đặt môi trường và triển khai thực tế
-├── ENVIRONMENT_CHECK.md                    # Báo cáo kiểm tra môi trường và tính tương thích phần cứng
-├── HARDWARE.md                             # Danh mục linh kiện, sơ đồ nguyên lý và lưu ý đấu nối mạch
-├── LICENSE                                 # Giấy phép mã nguồn mở MIT License
-├── MQTT_TOPICS.md                          # Tài liệu đặc tả các chủ đề MQTT và định dạng gói tin JSON
-├── README.md                               # Tài liệu hướng dẫn chính của toàn bộ dự án
-├── SECURITY.md                             # Chính sách bảo mật và kênh báo cáo lỗ hổng an toàn
-└── TEST_REPORT.md                          # Báo cáo kết quả kiểm thử tự động, độ ổn định & hiệu năng
+/home/pi/Duy/Hethonggiamsat
 ```
 
----
+### Cây thư mục chi tiết
 
-## 🤝 Đóng Góp (Contributing)
-
-Mọi đóng góp nhằm cải thiện hệ thống đều được hoan nghênh! Vui lòng đọc kỹ [CONTRIBUTING.md](CONTRIBUTING.md) và [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) trước khi tạo Pull Request.
-
----
-
-## 📜 Giấy Phép (License)
-
-Dự án được phân phối dưới giấy phép mã nguồn mở **MIT License**. Chi tiết xem tại [LICENSE](LICENSE).
+```text
+.
+├── .github/                                  # Tự động hóa và biểu mẫu GitHub
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml                    # Mẫu báo cáo lỗi
+│   │   ├── config.yml                        # Cấu hình trang tạo issue
+│   │   └── feature_request.yml               # Mẫu đề xuất tính năng
+│   ├── workflows/
+│   │   ├── ci.yml                            # Build/kiểm tra host và firmware trên CI
+│   │   └── release.yml                       # Đóng gói bản phát hành
+│   ├── dependabot.yml                        # Theo dõi cập nhật dependency
+│   └── PULL_REQUEST_TEMPLATE.md              # Checklist Pull Request
+│
+├── esp32/                                    # Firmware ESP32 đi kèm source host
+│   ├── include/                              # Khai báo module firmware
+│   │   ├── alarm_service.h                   # Máy trạng thái còi và LED
+│   │   ├── config.h                          # GPIO, chu kỳ và ngưỡng mặc định
+│   │   ├── lcd_display.h                     # Giao diện điều khiển LCD 1602
+│   │   ├── mq2_sensor.h                      # Kết quả đọc MQ-2 AO
+│   │   ├── mqtt_service.h                    # MQTT và getter các ngưỡng
+│   │   ├── network_settings.h                # API cấu hình Wi-Fi/MQTT
+│   │   ├── secrets.h.example                 # Mẫu thông tin Wi-Fi/MQTT
+│   │   ├── secrets.h                         # Bí mật thật, bị .gitignore loại trừ
+│   │   ├── sht3x_sensor.h                    # API cảm biến SHT3x
+│   │   ├── system_state.h                    # Dữ liệu hệ thống và AlarmKind
+│   │   └── wifi_service.h                    # API quản lý Wi-Fi
+│   ├── src/                                  # Hiện thực firmware
+│   │   ├── alarm_service.cpp                 # Bật cảnh báo, tắt trễ sau 3 giây an toàn
+│   │   ├── lcd_display.cpp                   # Hiển thị số đo/nguyên nhân cảnh báo
+│   │   ├── main.cpp                          # setup, loop và ưu tiên bốn cảnh báo
+│   │   ├── mq2_sensor.cpp                    # ADC 12-bit, trung bình 30 mẫu MQ-2
+│   │   ├── mqtt_service.cpp                  # Telemetry, config và lệnh buzzer
+│   │   ├── network_settings.cpp              # Wi-Fi/MQTT từ secrets hoặc WiFiManager
+│   │   ├── sht3x_sensor.cpp                  # Đọc nhiệt độ/độ ẩm
+│   │   └── wifi_service.cpp                  # Kết nối và tự phục hồi Wi-Fi
+│   ├── lib/README                            # Vị trí thư viện PlatformIO nội bộ nếu có
+│   ├── test/README                           # Vị trí test firmware nếu bổ sung
+│   ├── .vscode/                              # Gợi ý PlatformIO/VS Code
+│   ├── .gitignore                            # Loại cache và secrets firmware
+│   ├── platformio.ini                        # Board esp32dev, framework và lib_deps
+│   └── UPLOAD_ESP32.bat                      # Build/nạp trên Windows
+│
+├── include/                                  # Header của ứng dụng Qt trên Raspberry Pi
+│   ├── alarm_service.h                       # API lưu và kết thúc cảnh báo SQLite
+│   ├── app_config.h                          # Tên app, đường dẫn, watchdog, số điểm chart
+│   ├── app_logger.h                          # API log ứng dụng
+│   ├── auth_service.h                        # Xác thực và quản trị tài khoản
+│   ├── csv_exporter.h                        # Xuất dữ liệu CSV
+│   ├── database_manager.h                    # Kết nối, schema và cấu hình SQLite
+│   ├── models.h                              # SensorReading, AppSettings, UserSession
+│   ├── mq2_filter.h                          # Bộ lọc MQ-2 dùng trong kiểm thử/tương thích
+│   ├── mqtt_service.h                        # MQTT Qt signals/slots
+│   ├── sensor_repository.h                   # Lưu và truy vấn telemetry
+│   └── settings_service.h                    # Đọc/ghi ngưỡng và cấu hình MQTT
+│
+├── src/                                      # Hiện thực phần lõi ứng dụng Qt
+│   ├── alarm_service.cpp                     # Lịch sử bốn loại cảnh báo
+│   ├── app_logger.cpp                        # Log có timestamp ra console/file
+│   ├── auth_service.cpp                      # PBKDF2 và phân quyền ADMIN/USER
+│   ├── csv_exporter.cpp                      # Tạo báo cáo CSV
+│   ├── database_manager.cpp                  # Khởi tạo/migration database
+│   ├── main.cpp                              # QApplication, test và vòng đăng nhập/đăng xuất
+│   ├── mq2_filter.cpp                        # Median/EMA/hysteresis MQ-2
+│   ├── mqtt_service.cpp                      # Parse telemetry và publish ngưỡng
+│   ├── sensor_repository.cpp                 # CRUD dữ liệu cảm biến
+│   └── settings_service.cpp                  # Lưu cấu hình hệ thống
+│
+├── ui/                                       # Giao diện Qt Widgets
+│   ├── login_window.h/.cpp                   # Màn hình đăng nhập
+│   ├── main_window.h/.cpp                    # Tabs, status bar và nút Đăng xuất
+│   ├── dashboard_page.h/.cpp                 # Thẻ số đo, trạng thái và ba biểu đồ
+│   ├── history_page.h/.cpp                   # Lịch sử telemetry và xuất CSV
+│   ├── alarm_history_page.h/.cpp             # Lịch sử cảnh báo ACTIVE/ENDED
+│   ├── settings_page.h/.cpp                  # Ngưỡng và MQTT dành cho ADMIN
+│   └── users_page.h/.cpp                     # Quản lý tài khoản dành cho ADMIN
+│
+├── scripts/                                  # Build, deploy và vận hành
+│   ├── build_arm64.sh                        # Cross-build Qt/C++ cho ARM64
+│   ├── deploy_pi.sh                          # Dừng bản cũ và chép binary sang Pi
+│   ├── build_deploy_run.sh                   # Build + deploy + chạy nền
+│   ├── configure_qtcreator.sh                # Hỗ trợ cấu hình kit Qt Creator
+│   ├── qtcreator_build_deploy.sh             # Build Step khi bấm Run
+│   ├── run_from_qtcreator.sh                 # Run Configuration chạy trên Pi
+│   └── git_sync_github.sh                    # Tiện ích đồng bộ GitHub
+│
+├── data/                                     # Database và bí mật runtime trên host
+│   ├── .gitkeep                              # Giữ thư mục trong Git
+│   ├── hethonggiamsat.sqlite                 # Tạo khi chạy, không commit
+│   ├── initial_admin.txt                     # Tạo lần đầu, mode 0600, không commit
+│   └── mqtt_credentials.ini                  # Tạo khi lưu MQTT, không commit
+├── logs/                                     # Nhật ký runtime, không commit
+│   └── .gitkeep                              # Giữ thư mục trong Git
+├── build-arm64-qtcreator/                    # Kết quả cross-build ARM64, sinh tự động
+├── build-host-qt65/                          # Kết quả build/test x86_64, sinh tự động
+│
+├── .clang-format                             # Quy tắc định dạng C++
+├── .editorconfig                             # Quy tắc editor chung
+├── .gitattributes                            # Thuộc tính file Git
+├── .gitignore                                # Loại build, secrets, DB và log
+├── CMakeLists.txt                            # Target Qt 6.5, C++17, SQLite, libmosquitto
+├── CMakeLists.txt.user                       # Kit/Build/Run của Qt Creator trên Ubuntu VM này
+├── LICENSE                                   # MIT License
+└── README.md                                 # Tài liệu vận hành chính
+```

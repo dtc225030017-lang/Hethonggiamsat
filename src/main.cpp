@@ -103,6 +103,14 @@ static QString applicationStyle()
         QPushButton:hover { background: #1d4ed8; }
         QPushButton:pressed { background: #1e40af; }
         QPushButton:disabled { background: #cbd5e1; color: #94a3b8; }
+        QPushButton#logoutButton {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            min-height: 28px;
+            padding: 0 13px;
+        }
+        QPushButton#logoutButton:hover { background: #fecaca; }
         QLineEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QComboBox {
             background: #ffffff;
             color: #0f172a;
@@ -207,5 +215,5 @@ static int integrationTest(QApplication &app, const QString &root)
 
 int main(int argc,char*argv[])
 {
-    QApplication app(argc,argv);app.setApplicationName(AppConfig::Name);app.setOrganizationName(QStringLiteral("DuyIoT"));app.setFont(QFont(QStringLiteral("DejaVu Sans"),10));app.setStyleSheet(applicationStyle());if(app.arguments().contains(QStringLiteral("--self-test")))return selfTest();QString root=qEnvironmentVariable("HETHONGGIAMSAT_ROOT",AppConfig::DefaultRoot);if(app.arguments().contains(QStringLiteral("--mqtt-test")))return mqttTest(root);if(app.arguments().contains(QStringLiteral("--integration-test")))return integrationTest(app,root);QDir().mkpath(root);QLockFile lock(QDir(root).filePath(QStringLiteral("data/Hethonggiamsat.lock")));lock.setStaleLockTime(0);if(!lock.tryLock(100)){qCritical("Ứng dụng đang chạy ở một instance khác.");return 2;}AppLogger::install(root);qInfo()<<"Application startup";DatabaseManager db;QString error;if(!db.initialize(root,&error)){qCritical()<<"Database init failed"<<error;return 3;}AuthService auth(db);QString bootstrap;if(!auth.ensureBootstrapAdmin(&bootstrap)){qCritical()<<"Bootstrap admin failed";return 4;}if(!bootstrap.isEmpty())qInfo()<<bootstrap;LoginWindow login(auth);if(login.exec()!=QDialog::Accepted){qInfo()<<"Application shutdown before login";AppLogger::shutdown();return 0;}MainWindow window(db,auth,login.session());window.show();int rc=app.exec();qInfo()<<"Application shutdown";AppLogger::shutdown();return rc;
+    QApplication app(argc,argv);app.setApplicationName(AppConfig::Name);app.setOrganizationName(QStringLiteral("DuyIoT"));app.setFont(QFont(QStringLiteral("DejaVu Sans"),10));app.setStyleSheet(applicationStyle());if(app.arguments().contains(QStringLiteral("--self-test")))return selfTest();QString root=qEnvironmentVariable("HETHONGGIAMSAT_ROOT",AppConfig::DefaultRoot);if(app.arguments().contains(QStringLiteral("--mqtt-test")))return mqttTest(root);if(app.arguments().contains(QStringLiteral("--integration-test")))return integrationTest(app,root);QDir().mkpath(root);QLockFile lock(QDir(root).filePath(QStringLiteral("data/Hethonggiamsat.lock")));lock.setStaleLockTime(0);if(!lock.tryLock(100)){qCritical("Ứng dụng đang chạy ở một instance khác.");return 2;}AppLogger::install(root);qInfo()<<"Application startup";DatabaseManager db;QString error;if(!db.initialize(root,&error)){qCritical()<<"Database init failed"<<error;return 3;}AuthService auth(db);QString bootstrap;if(!auth.ensureBootstrapAdmin(&bootstrap)){qCritical()<<"Bootstrap admin failed";return 4;}if(!bootstrap.isEmpty())qInfo()<<bootstrap;constexpr int LogoutCode=100;int rc=LogoutCode;while(rc==LogoutCode){LoginWindow login(auth);if(login.exec()!=QDialog::Accepted){rc=0;break;}MainWindow window(db,auth,login.session());QObject::connect(&window,&MainWindow::logoutRequested,&app,[&app]{app.exit(LogoutCode);});window.show();rc=app.exec();}qInfo()<<"Application shutdown";AppLogger::shutdown();return rc;
 }

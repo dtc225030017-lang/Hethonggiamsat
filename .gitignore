@@ -56,8 +56,10 @@ esp32/.pioenvs/
 esp32/.piolibdeps/
 .clangd/
 
-# Keep secrets.h ignored if private, keep secrets.h.example
-# esp32/include/secrets.h
+# Keep secrets.h ignored to protect private credentials
+esp32/include/secrets.h
+**/secrets.h
+!esp32/include/secrets.h.example
 
 # ==============================================================================
 # IDEs and Editors

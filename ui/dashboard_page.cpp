@@ -236,7 +236,16 @@ void DashboardPage::updateReading(const SensorReading &reading)
     mq2_->setText(!reading.mq2DigitalMode
         ? QStringLiteral("%1 ADC  ·  %2 mV").arg(reading.mq2Raw).arg(reading.mq2Mv)
         : QStringLiteral("CHƯA CÓ DỮ LIỆU AO"));
-    quality_->setText(reading.alarm ? QStringLiteral("⚠  CẢNH BÁO KHÍ / KHÓI")
+    QString alarmText;
+    if (reading.alarmType == QStringLiteral("TEMP_HIGH"))
+        alarmText = QStringLiteral("⚠  CẢNH BÁO NHIỆT ĐỘ CAO");
+    else if (reading.alarmType == QStringLiteral("HUMIDITY_HIGH"))
+        alarmText = QStringLiteral("⚠  CẢNH BÁO ĐỘ ẨM CAO");
+    else if (reading.alarmType == QStringLiteral("HUMIDITY_LOW"))
+        alarmText = QStringLiteral("⚠  CẢNH BÁO ĐỘ ẨM THẤP");
+    else
+        alarmText = QStringLiteral("⚠  CẢNH BÁO KHÍ / KHÓI");
+    quality_->setText(reading.alarm ? alarmText
                                     : QStringLiteral("✓  CHẤT LƯỢNG KHÔNG KHÍ BÌNH THƯỜNG"));
     quality_->setObjectName(reading.alarm ? QStringLiteral("qualityAlarm")
                                          : QStringLiteral("qualityNormal"));
