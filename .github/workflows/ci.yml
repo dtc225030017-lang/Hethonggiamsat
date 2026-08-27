@@ -71,11 +71,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install PlatformIO Core
         run: |
           pip install --upgrade platformio
+
+      - name: Prepare secrets header for build
+        run: |
+          cp esp32/include/secrets.h.example esp32/include/secrets.h
 
       - name: Build ESP32 PlatformIO Environment
         working-directory: esp32

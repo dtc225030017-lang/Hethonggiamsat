@@ -6,10 +6,3 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
-
-  # Maintain dependencies for PlatformIO / ESP32 if managed via pip/submodules
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
