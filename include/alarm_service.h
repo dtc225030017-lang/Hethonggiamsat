@@ -27,11 +27,11 @@ public:
     bool active() const;
 private:
     bool start(const QString &type, double value, double threshold, QString *error);
-    bool update(double value, QString *error);
+    bool update(double value, bool lowerIsWorse, QString *error);
     bool finish(QString *error);
     DatabaseManager &db_;
     int activeId_ = 0;
+    QString activeType_;
     double maxValue_ = 0;
     int normalSamples_ = 0;
 };
-

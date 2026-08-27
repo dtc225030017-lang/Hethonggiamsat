@@ -11,8 +11,12 @@ file "${BINARY}" | grep -q 'ARM aarch64'
 ssh "${PI_TARGET}" "mkdir -p '${PI_ROOT}/data' '${PI_ROOT}/logs'"
 ssh "${PI_TARGET}" "pkill -x Hethonggiamsat 2>/dev/null || true"
 scp "${BINARY}" "${PI_TARGET}:${PI_ROOT}/Hethonggiamsat.new"
-scp "${PROJECT_ROOT}/README.md" "${PROJECT_ROOT}/ARCHITECTURE.md" \
-    "${PROJECT_ROOT}/MQTT_TOPICS.md" "${PROJECT_ROOT}/DATABASE_SCHEMA.md" \
-    "${PROJECT_ROOT}/DEPLOYMENT.md" "${PI_TARGET}:${PI_ROOT}/"
+docs=()
+for name in README.md ARCHITECTURE.md MQTT_TOPICS.md DATABASE_SCHEMA.md DEPLOYMENT.md; do
+  [[ -f "${PROJECT_ROOT}/${name}" ]] && docs+=("${PROJECT_ROOT}/${name}")
+done
+if (( ${#docs[@]} > 0 )); then
+  scp "${docs[@]}" "${PI_TARGET}:${PI_ROOT}/"
+fi
 ssh "${PI_TARGET}" "mv '${PI_ROOT}/Hethonggiamsat.new' '${PI_ROOT}/Hethonggiamsat' && chmod 0755 '${PI_ROOT}/Hethonggiamsat'"
 echo "PASS: deployed only to ${PI_TARGET}:${PI_ROOT}"

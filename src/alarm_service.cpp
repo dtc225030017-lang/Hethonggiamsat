@@ -7,8 +7,8 @@
 AlarmService::AlarmService(DatabaseManager &db) : db_(db)
 {
     QSqlQuery q(db_.database());
-    if (q.exec(QStringLiteral("SELECT id,max_value FROM canh_bao WHERE status='ACTIVE' ORDER BY id DESC LIMIT 1")) && q.next()) {
-        activeId_ = q.value(0).toInt(); maxValue_ = q.value(1).toDouble();
+    if (q.exec(QStringLiteral("SELECT id,alarm_type,max_value FROM canh_bao WHERE status='ACTIVE' ORDER BY id DESC LIMIT 1")) && q.next()) {
+        activeId_ = q.value(0).toInt(); activeType_ = q.value(1).toString(); maxValue_ = q.value(2).toDouble();
     }
 }
 
@@ -19,14 +19,14 @@ bool AlarmService::start(const QString &type, double value, double threshold, QS
     q.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)); q.addBindValue(type);
     q.addBindValue(value); q.addBindValue(threshold); q.addBindValue(value);
     if (!q.exec()) { if (error) *error = q.lastError().text(); return false; }
-    activeId_ = q.lastInsertId().toInt(); maxValue_ = value; normalSamples_ = 0;
+    activeId_ = q.lastInsertId().toInt(); activeType_ = type; maxValue_ = value; normalSamples_ = 0;
     qWarning() << "Alarm started" << type << value << threshold;
     return true;
 }
 
-bool AlarmService::update(double value, QString *error)
+bool AlarmService::update(double value, bool lowerIsWorse, QString *error)
 {
-    if (value <= maxValue_) return true;
+    if ((!lowerIsWorse && value <= maxValue_) || (lowerIsWorse && value >= maxValue_)) return true;
     maxValue_ = value; QSqlQuery q(db_.database());
     q.prepare(QStringLiteral("UPDATE canh_bao SET max_value=? WHERE id=?")); q.addBindValue(value); q.addBindValue(activeId_);
     if (!q.exec()) { if (error) *error = q.lastError().text(); return false; } return true;
@@ -37,26 +37,31 @@ bool AlarmService::finish(QString *error)
     QSqlQuery q(db_.database()); q.prepare(QStringLiteral("UPDATE canh_bao SET end_time=?,status='ENDED' WHERE id=?"));
     q.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs)); q.addBindValue(activeId_);
     if (!q.exec()) { if (error) *error = q.lastError().text(); return false; }
-    qInfo() << "Alarm ended" << activeId_; activeId_ = 0; maxValue_ = 0; normalSamples_ = 0; return true;
+    qInfo() << "Alarm ended" << activeId_; activeId_ = 0; activeType_.clear(); maxValue_ = 0; normalSamples_ = 0; return true;
 }
 
 bool AlarmService::process(const SensorReading &r, double threshold, QString *error)
 {
-    // MainWindow only sets this flag after filtering spikes and confirming a
-    // sustained high MQ-2 level.
+    const QString type = r.alarmType == QStringLiteral("NONE")
+        ? QStringLiteral("MQ2_HIGH") : r.alarmType;
+    const bool lowerIsWorse = type == QStringLiteral("HUMIDITY_LOW");
+    const double value = type == QStringLiteral("TEMP_HIGH") ? r.temperature
+        : (type.startsWith(QStringLiteral("HUMIDITY")) ? r.humidity : r.mq2Raw);
     const bool high = r.alarm;
-    if (!activeId_ && high) return start(r.alarmType == QStringLiteral("NONE") ? QStringLiteral("MQ2_HIGH") : r.alarmType, r.mq2Raw, threshold, error);
+    if (!activeId_ && high) return start(type, value, threshold, error);
     if (!activeId_) return true;
-    if (high) { normalSamples_ = 0; return update(r.mq2Raw, error); }
-    if (threshold <= 1.0) return finish(error);
-    const double hysteresis = qBound(5.0, threshold * 0.10, 100.0);
-    if (r.mq2Raw <= threshold - hysteresis && ++normalSamples_ >= 3) return finish(error);
+    if (high && type != activeType_) {
+        if (!finish(error)) return false;
+        return start(type, value, threshold, error);
+    }
+    if (high) { normalSamples_ = 0; return update(value, lowerIsWorse, error); }
+    if (++normalSamples_ >= 3) return finish(error);
     return true;
 }
 
 bool AlarmService::externalAlarm(const QString &type, double value, double threshold, QString *error)
 {
-    return activeId_ ? update(value, error) : start(type, value, threshold, error);
+    return activeId_ ? update(value, type == QStringLiteral("HUMIDITY_LOW"), error) : start(type, value, threshold, error);
 }
 
 QList<AlarmRecord> AlarmService::query(const QDateTime &from, const QDateTime &to, int limit, QString *error) const
