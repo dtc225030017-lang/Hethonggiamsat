@@ -39,3 +39,26 @@ CMakeLists.txt text eol=lf
 *.elf binary
 *.tar.gz binary
 *.zip binary
+
+# GitHub Linguist Overrides (Force 100% C++)
+*.h linguist-language=C++
+*.hpp linguist-language=C++
+*.cpp linguist-language=C++
+
+scripts/** linguist-vendored
+scripts/** linguist-detectable=false
+*.sh linguist-vendored
+*.sh linguist-detectable=false
+*.bash linguist-vendored
+*.bash linguist-detectable=false
+*.bat linguist-vendored
+*.bat linguist-detectable=false
+*.cmd linguist-vendored
+*.cmd linguist-detectable=false
+*.cmake linguist-vendored
+*.cmake linguist-detectable=false
+CMakeLists.txt linguist-vendored
+CMakeLists.txt linguist-detectable=false
+platformio.ini linguist-vendored
+platformio.ini linguist-detectable=false
+
